@@ -356,6 +356,11 @@ ipxe-iso:
     ELSE
         COPY $ipxe_script /build/ipxe/script.ipxe
     END
+    # TODO: https://ipxe.org/buildcfg/download_proto_https
+    # change this to "define":
+    # https://github.com/ipxe/ipxe/blob/563bff472276b25a6788abc3c916cda65e7ceead/src/config/general.h#L58
+    # and is should work
+    # Do a bash replace?
     RUN cd ipxe/src && make EMBED=/build/ipxe/script.ipxe
     SAVE ARTIFACT /build/ipxe/src/bin/ipxe.iso iso AS LOCAL build/${ISO_NAME}-ipxe.iso.ipxe
     SAVE ARTIFACT /build/ipxe/src/bin/ipxe.usb usb AS LOCAL build/${ISO_NAME}-ipxe-usb.img.ipxe
