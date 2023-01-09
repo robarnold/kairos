@@ -34,6 +34,10 @@ type Install struct {
 	Image                  string            `yaml:"image,omitempty"`
 }
 
+type KcryptConfig struct {
+	Server string `yaml:"challenger_server"`
+}
+
 type Config struct {
 	Install *Install `yaml:"install,omitempty"`
 	//cloudFileContent string
@@ -45,6 +49,7 @@ type Config struct {
 	Bundles            Bundles           `yaml:"bundles,omitempty"`
 	GrubOptions        map[string]string `yaml:"grub_options,omitempty"`
 	Env                []string          `yaml:"env,omitempty"`
+	Kcrypt             KcryptConfig      `yaml:"kcrypt,omitempty"`
 }
 
 type Bundles []Bundle
