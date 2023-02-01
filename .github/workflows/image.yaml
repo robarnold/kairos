@@ -300,6 +300,7 @@ jobs:
         df -h
     - run: |
             ls -liah
+            rm .earthlyignore
             export ISO=$PWD/$(ls *.iso)
             sudo mkdir build
             sudo mv $ISO build/
