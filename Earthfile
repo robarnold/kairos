@@ -137,6 +137,16 @@ build-kairos-agent:
 build:
     BUILD +build-kairos-agent
 
+build-installer-bundle:
+    FROM golang
+    COPY --keep-own +docker-rootfs/rootfs /build/image
+    # Save up some space
+    RUN rm -rf /build/image/boot /build/image/lib/firmware /build/image/lib/modules
+    COPY +poco/poco /usr/bin/poco
+    RUN apt-get update && apt-get install -y sudo
+    RUN CGO_ENABLED=0 poco bundle --entrypoint /usr/bin/elemental --app-mounts /dev --directory /build/image --output kairos
+    SAVE ARTIFACT kairos AS LOCAL kairos-bundle
+
 dist:
     ARG GO_VERSION
     FROM golang:$GO_VERSION
@@ -181,6 +191,10 @@ lint:
 luet:
     FROM quay.io/luet/base:$LUET_VERSION
     SAVE ARTIFACT /usr/bin/luet /luet
+
+poco: 
+    FROM quay.io/kairos/packages:poco-utils-0.3.1
+    SAVE ARTIFACT /usr/bin/poco /poco
 
 ###
 ### Image Build targets
