@@ -1,0 +1,127 @@
+ARG BASE_IMAGE=ubuntu:20.04
+
+FROM $BASE_IMAGE
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update
+RUN apt install -y ca-certificates
+
+RUN apt install -y sudo
+RUN apt install -y ssh
+RUN apt install -y netplan.io
+
+# resizerootfs
+RUN apt install -y udev
+RUN apt install -y parted
+
+# ifconfig
+RUN apt install -y net-tools
+
+# needed by knod-static-nodes to create a list of static device nodes
+RUN apt install -y kmod
+
+RUN systemctl enable ssh
+RUN systemctl enable systemd-networkd
+
+RUN mkdir -p /opt/nvidia/l4t-packages
+RUN touch /opt/nvidia/l4t-packages/.nv-l4t-disable-boot-fw-update-in-preinstall
+
+# nv-l4t-usb-device-mode
+RUN apt install --no-install-recommends  -y bridge-utils \
+    gnupg \
+    software-properties-common && add-apt-repository ppa:oibaf/test
+RUN echo "deb [signed-by=/usr/share/keyrings/nvidia-l4t-archive-keyring.asc] https://repo.download.nvidia.com/jetson/common r32.6 main" >> /etc/apt/sources.list.d/nvidia-l4t.list
+RUN echo "deb [signed-by=/usr/share/keyrings/nvidia-l4t-archive-keyring.asc] https://repo.download.nvidia.com/jetson/t210 r32.6 main" >> /etc/apt/sources.list.d/nvidia-l4t.list
+RUN echo "deb http://ports.ubuntu.com/ubuntu-ports/ bionic main" >> /etc/apt/sources.list.d/bionic.list
+
+
+RUN apt -o Acquire::AllowInsecureRepositories=true \
+-o Acquire::AllowDowngradeToInsecureRepositories=true update
+
+# https://docs.nvidia.com/jetson/l4t/index.html#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/updating_jetson_and_host.html
+RUN apt -o APT::Get::AllowUnauthenticated=true install -y -o Dpkg::Options::="--force-overwrite" \
+    nvidia-l4t-core \
+    nvidia-l4t-init \
+    nvidia-l4t-bootloader \
+    nvidia-l4t-camera \
+    nvidia-l4t-initrd \
+    nvidia-l4t-xusb-firmware \
+    nvidia-l4t-kernel \
+    nvidia-l4t-kernel-dtbs \
+    nvidia-l4t-kernel-headers \
+    nvidia-l4t-cuda \
+    jetson-gpio-common \
+    python3-jetson-gpio
+
+RUN rm -rf /opt/nvidia/l4t-packages
+
+RUN apt-get -o APT::Get::AllowUnauthenticated=true install -y --no-install-recommends \
+    conntrack \
+    console-data \
+    coreutils \
+    cryptsetup \
+    curl \
+    debianutils \
+    dmsetup \
+    dosfstools \
+    dracut \
+    dracut-network \
+    e2fsprogs \
+    efibootmgr \
+    file \
+    fuse \
+    gawk \
+    grub-efi-arm64-bin \
+    grub2-common \
+    haveged \
+    iproute2 \
+    iptables \
+    isc-dhcp-common \
+    jq \
+    kbd \
+    krb5-locales \
+    lldpd \
+    lvm2 \
+    mdadm \
+    nbd-client \
+    ncurses-term \
+    networkd-dispatcher \
+    nfs-common \
+    open-iscsi \
+    open-vm-tools \
+    openssh-server \
+    os-prober \
+    packagekit-tools \
+    parted \
+    policykit-1 \
+    publicsuffix \
+    rsync \
+    shared-mime-info \
+    snmpd \
+    squashfs-tools \
+    sudo \
+    systemd \
+    systemd-timesyncd \
+    unattended-upgrades \
+    xdg-user-dirs \
+    xxd \
+    xz-utils \
+    zerofree \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /usr/sbin/grub-install /usr/sbin/grub2-install
+RUN ln -s /usr/bin/grub-editenv /usr/bin/grub2-editenv
+RUN systemctl enable systemd-networkd
+RUN systemctl enable ssh
+
+# Enable tmp
+RUN cp -v /usr/share/systemd/tmp.mount /etc/systemd/system/ 
+RUN systemctl enable tmp.mount
+
+# Fixup sudo perms
+RUN chown root:root /usr/bin/sudo && chmod 4755 /usr/bin/sudo
+
+
+# Clear cache
+RUN rm -rf /var/cache/* && journalctl --vacuum-size=1K && rm /etc/machine-id && rm /var/lib/dbus/machine-id && rm /etc/hostname

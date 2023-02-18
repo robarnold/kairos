@@ -131,7 +131,7 @@ version:
 build-kairos-agent:
     FROM +go-deps
     COPY +webui-deps/node_modules ./internal/webui/public/node_modules
-    COPY +docs/public/local ./internal/webui/public/local
+    #COPY +docs/public/local ./internal/webui/public/local
     DO +BUILD_GOLANG --BIN=kairos-agent --SRC=agent --CGO_ENABLED=$CGO_ENABLED
 
 build:
@@ -275,7 +275,7 @@ docker:
     
     IF [ "$FLAVOR" = "alpine-arm-rpi" ]
         COPY overlay/files-opensuse-arm-rpi/ /
-    ELSE IF [ "$FLAVOR" = "opensuse-leap-arm-rpi" ] || [ "$FLAVOR" = "opensuse-tumbleweed-arm-rpi" ]
+    ELSE IF [ "$FLAVOR" = "opensuse-leap-arm-rpi" ] || [ "$FLAVOR" = "opensuse-tumbleweed-arm-rpi" ] || [ "$FLAVOR" = "ubuntu-20-lts-arm-jetson" ]
         COPY overlay/files-opensuse-arm-rpi/ /
     ELSE IF [ "$FLAVOR" = "fedora" ] || [ "$FLAVOR" = "rockylinux" ]
         COPY overlay/files-fedora/ /
@@ -318,6 +318,13 @@ docker:
      RUN kernel=$(ls /lib/modules | head -n1) && depmod -a "${kernel}"
      # https://github.com/kairos-io/elemental-cli/blob/23ca64435fedb9f521c95e798d2c98d2714c53bd/pkg/elemental/elemental.go#L553
      RUN rm -rf /boot/initramfs-*
+    ELSE IF [ "$FLAVOR" = "ubuntu-20-lts-arm-jetson" ]
+     RUN kernel=$(ls /boot/Image | head -n1) && \
+            ln -sf "${kernel#/boot/}" /boot/vmlinuz
+     RUN kernel=$(ls /lib/modules | head -n1) && \
+            dracut -f "/boot/initrd-${kernel}" "${kernel}" && \
+            ln -sf "initrd-${kernel}" /boot/initrd
+     RUN kernel=$(ls /lib/modules | head -n1) && depmod -a "${kernel}"
     ELSE IF [ "$FLAVOR" = "debian" ] || [ "$FLAVOR" = "ubuntu" ] || [ "$FLAVOR" = "ubuntu-20-lts" ] || [ "$FLAVOR" = "ubuntu-22-lts" ]
      RUN kernel=$(ls /boot/vmlinuz-* | head -n1) && \
             ln -sf "${kernel#/boot/}" /boot/vmlinuz
