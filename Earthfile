@@ -269,7 +269,7 @@ docker:
     RUN rm -rf /etc/machine-id && touch /etc/machine-id && chmod 444 /etc/machine-id
 
     # Copy flavor-specific overlay files
-    IF [[ "$FLAVOR" =~ "alpine" ]]
+    IF [[ "$FLAVOR" = "alpine-arm-rpi" ]] || [[ "$FLAVOR" = "alpine-opensuse-leap" ]] || [[ "$FLAVOR" = "alpine-ubuntu" ]]
         COPY overlay/files-alpine/ /
     END
     
@@ -321,10 +321,10 @@ docker:
     ELSE IF [ "$FLAVOR" = "ubuntu-20-lts-arm-jetson" ]
      RUN kernel=$(ls /boot/Image | head -n1) && \
             ln -sf "${kernel#/boot/}" /boot/vmlinuz
+     RUN kernel=$(ls /lib/modules | head -n1) && depmod -a "${kernel}"
      RUN kernel=$(ls /lib/modules | head -n1) && \
             dracut -f "/boot/initrd-${kernel}" "${kernel}" && \
             ln -sf "initrd-${kernel}" /boot/initrd
-     RUN kernel=$(ls /lib/modules | head -n1) && depmod -a "${kernel}"
     ELSE IF [ "$FLAVOR" = "debian" ] || [ "$FLAVOR" = "ubuntu" ] || [ "$FLAVOR" = "ubuntu-20-lts" ] || [ "$FLAVOR" = "ubuntu-22-lts" ]
      RUN kernel=$(ls /boot/vmlinuz-* | head -n1) && \
             ln -sf "${kernel#/boot/}" /boot/vmlinuz

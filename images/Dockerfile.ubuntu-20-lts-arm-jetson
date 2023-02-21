@@ -1,5 +1,11 @@
 ARG BASE_IMAGE=ubuntu:20.04
 
+FROM fedora:36 as kernel
+
+RUN dnf install -y kernel \
+    kernel-modules \
+    kernel-modules-extra 
+
 FROM $BASE_IMAGE
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -43,18 +49,24 @@ RUN apt -o Acquire::AllowInsecureRepositories=true \
 RUN apt -o APT::Get::AllowUnauthenticated=true install -y -o Dpkg::Options::="--force-overwrite" \
     nvidia-l4t-core \
     nvidia-l4t-init \
-    nvidia-l4t-bootloader \
+    #nvidia-l4t-bootloader \
     nvidia-l4t-camera \
-    nvidia-l4t-initrd \
+    #nvidia-l4t-initrd \
     nvidia-l4t-xusb-firmware \
-    nvidia-l4t-kernel \
-    nvidia-l4t-kernel-dtbs \
-    nvidia-l4t-kernel-headers \
-    nvidia-l4t-cuda \
+    #nvidia-l4t-kernel \
+    #nvidia-l4t-kernel-dtbs \
+    #nvidia-l4t-kernel-headers \
+    #nvidia-l4t-cuda \
     jetson-gpio-common \
     python3-jetson-gpio
 
-RUN rm -rf /opt/nvidia/l4t-packages
+
+# COPY --from=quay.io/kairos/packages:linux-tegra-kernels-4.9.299 / /tegra
+# RUN cp -rfv /tegra/boot/* /boot && cp -rfv /tegra/lib/* lib/ && rm -rfv /tegra
+RUN mkdir -p /fedora
+COPY --from=kernel / /fedora
+RUN ls -liah /fedora
+RUN cp -rfv /fedora/boot/* /boot && cp -rfv /fedora/lib/modules/* /lib/modules/ && rm -rfv /fedora
 
 RUN apt-get -o APT::Get::AllowUnauthenticated=true install -y --no-install-recommends \
     conntrack \
