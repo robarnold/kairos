@@ -287,7 +287,7 @@ docker:
     
     IF [ "$FLAVOR" = "alpine-arm-rpi" ]
         COPY overlay/files-opensuse-arm-rpi/ /
-    ELSE IF [ "$FLAVOR" = "opensuse-leap-arm-rpi" ] || [ "$FLAVOR" = "opensuse-tumbleweed-arm-rpi" ]
+    ELSE IF [ "$FLAVOR" = "opensuse-leap-arm-rpi" ] || [ "$FLAVOR" = "opensuse-tumbleweed-arm-rpi" ] || [ "$FLAVOR" = "ubuntu-20-lts-arm-jetson" ]
         COPY overlay/files-opensuse-arm-rpi/ /
     ELSE IF [ "$FLAVOR" = "fedora" ] || [ "$FLAVOR" = "rockylinux" ]
         COPY overlay/files-fedora/ /
@@ -316,9 +316,15 @@ docker:
     IF [ "$FLAVOR" = "debian" ]
 	    RUN rm -rf /boot/initrd.img-*
     END
+    RUN echo 'compress="gzip"' > /etc/dracut.conf.d/custom.conf
     # Regenerate initrd if necessary
     IF [ "$FLAVOR" = "opensuse-leap" ] || [ "$FLAVOR" = "opensuse-leap-arm-rpi" ] || [ "$FLAVOR" = "opensuse-tumbleweed-arm-rpi" ] || [ "$FLAVOR" = "opensuse-tumbleweed" ]
      RUN mkinitrd
+    ELSE IF [ "$FLAVOR" = "ubuntu-20-lts-arm-jetson" ]
+     RUN ln -sf Image /boot/vmlinuz
+     RUN kernel=$(ls /lib/modules | head -n1) && \
+            dracut -f "/boot/initrd-${kernel}" "${kernel}" && \
+            ln -sf "initrd-${kernel}" /boot/initrd
     ELSE IF [ "$FLAVOR" = "fedora" ] || [ "$FLAVOR" = "rockylinux" ]
      RUN kernel=$(ls /boot/vmlinuz-* | head -n1) && \
             ln -sf "${kernel#/boot/}" /boot/vmlinuz
