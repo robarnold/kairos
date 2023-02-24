@@ -96,6 +96,16 @@ stages:
         expand_partition:
           # Size 0 is required to specify all remaining space
           size: 0
+  boot:
+  - if: '[ ! -f /run/cos/recovery_mode ] && [ ! -f /run/cos/live_mode ]'
+    commands:
+    - mkdir /var/log/journal
+    - sed -i 's/#Storage.*/Storage=persistent/' /etc/systemd/journald.conf
+    - sed -i 's/#SystemMaxUse.*/SystemMaxUse=500M/' /etc/systemd/journald.conf
+    - journalctl --flush
+    - systemctl daemon-reload
+    - systemctl restart systemd-journald.service 
+    name: "Enable persistent journald logging"
   fs.after:
   - if: "[ ! -d /usr/local/cloud-config ]"
     commands:
